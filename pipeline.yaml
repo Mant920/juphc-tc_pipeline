@@ -34,3 +34,38 @@ spec:
         value: $(params.branch)
       runAfter:
         - init
+  # ---- ADDED: npminstall task ----
+    - name: npminstall
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskRef:
+        name: npm
+      runAfter:
+        - clone
+
+        # ---- ADDED: jasmine tests task ----
+    - name: tests
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskRef:
+        name: jasmine
+      runAfter:
+        - npminstall
+
+        # ---- ADDED: buildah (Docker build) task ----
+    - name: build
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+        - name: dockerconfig
+          workspace: dockerconfig-ws
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: "us.icr.io/$(context.pipelineRun.namespace)/$(params.app-name)"
+      runAfter:
+        - tests
